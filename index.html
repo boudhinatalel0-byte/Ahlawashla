@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameHub Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #FFD700;
+            --bg-dark: #0e0e0e;
+            --card-dark: #1a1a1a;
+            --text-dark: #ffffff;
+            --accent: #2ecc71;
+        }
+
+        body {
+            margin: 0; font-family: 'Cairo', sans-serif;
+            background: var(--bg-dark); color: var(--text-dark);
+            transition: 0.3s; padding-bottom: 90px;
+        }
+
+        body.light {
+            --bg-dark: #f8f9fa; --text-dark: #2d3436; --card-dark: #ffffff;
+        }
+
+        header {
+            text-align: center; padding: 15px; background: #000;
+            color: var(--primary); font-weight: bold; font-size: 20px;
+            position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #222;
+        }
+
+        .section { display: none; padding: 15px; max-width: 600px; margin: auto; }
+        .active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* الكروت */
+        .card { background: var(--card-dark); border-radius: 18px; overflow: hidden; margin-bottom: 20px; border: 1px solid #333; }
+        .card img { width: 100%; height: 200px; object-fit: cover; }
+        .card-body { padding: 15px; }
+
+        /* الأزرار والمدخلات */
+        input, textarea, select {
+            width: 100%; padding: 12px; margin: 8px 0; border-radius: 12px;
+            border: 1px solid #333; background: #1a1a1a; color: white; box-sizing: border-box;
+        }
+        .light input, .light textarea, .light select { background: #fff; color: #000; border: 1px solid #ccc; }
+
+        .button {
+            background: var(--primary); color: black; padding: 14px; border: none;
+            border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer;
+        }
+
+        .wa-btn {
+            background: #25d366; color: white; text-decoration: none; display: flex;
+            justify-content: center; align-items: center; gap: 8px; padding: 12px;
+            border-radius: 10px; font-weight: bold; margin-top: 10px;
+        }
+
+        /* المنيو السفلي - تم حذف أي أيقونات زائدة */
+        .nav {
+            position: fixed; bottom: 0; width: 100%; display: flex;
+            justify-content: space-around; background: rgba(0,0,0,0.9);
+            padding: 15px 0; border-top: 1px solid #222; backdrop-filter: blur(10px);
+        }
+        .nav button { background: none; border: none; font-size: 24px; color: #555; cursor: pointer; transition: 0.3s; }
+        .nav button.active-link { color: var(--primary); transform: translateY(-5px); }
+
+        .info-box { background: rgba(255, 215, 0, 0.1); padding: 15px; border-radius: 12px; border: 1px dashed var(--primary); margin-bottom: 15px; font-size: 14px; }
+    </style>
+</head>
+<body onload="loadPosts()">
+
+<header id="mainTitle">GameHub Market Pro</header>
+
+<div id="home" class="section active">
+    <div id="postsList"></div>
+</div>
+
+<div id="sell" class="section">
+    <h2 id="sellTitle">نشر حساب جديد</h2>
+    <div class="info-box" id="instructions">
+        <i class="fa-solid fa-circle-info"></i>
+        <span>أدخل اسم اللعبة بدقة، حدد السعر، وأضف رقم هاتفك ليتمكن المشترون من مراسلتك مباشرة عبر واتساب.</span>
+    </div>
+    
+    <input type="text" id="gameName" placeholder="اسم اللعبة">
+    <input type="number" id="price" placeholder="السعر">
+    <input type="tel" id="phone" placeholder="رقم الهاتف">
+    <textarea id="desc" placeholder="وصف الحساب (مثلاً: سكنات نادرة، ليفل العضوية...)"></textarea>
+    
+    <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleImage(event)">
+    <button class="button" style="background:#333; color:white; margin-bottom:10px;" onclick="document.getElementById('fileInput').click()">
+        <i class="fa-solid fa-image"></i> <span id="addImgText">إضافة صورة الحساب</span>
+    </button>
+    <img id="preview" style="width:100%; height:150px; display:none; border-radius:12px; margin-bottom:15px; object-fit:cover;">
+
+    <button class="button" onclick="savePost()" id="postBtn">تأكيد ونشر الإعلان</button>
+</div>
+
+<div id="settings" class="section">
+    <h2 id="setHeading">الإعدادات</h2>
+    
+    <label id="langText">اختر اللغة:</label>
+    <select onchange="updateLang(this.value)">
+        <option value="ar">العربية</option>
+        <option value="en">English</option>
+    </select>
+
+    <label id="themeText" style="margin-top:15px; display:block;">المظهر:</label>
+    <select onchange="toggleTheme(this.value)">
+        <option value="dark">الوضع الداكن</option>
+        <option value="light">الوضع الفاتح</option>
+    </select>
+
+    <button class="button" style="background:#ff4757; color:white; margin-top:40px;" onclick="clearData()">
+        <i class="fa-solid fa-trash"></i> <span id="clearDataText">حذف جميع بياناتي</span>
+    </button>
+</div>
+
+<div class="nav">
+    <button onclick="showPage('home', this)" class="active-link">
+        <i class="fa-solid fa-house-chimney"></i>
+    </button>
+    <button onclick="showPage('sell', this)">
+        <i class="fa-solid fa-circle-plus"></i>
+    </button>
+    <button onclick="showPage('settings', this)">
+        <i class="fa-solid fa-sliders"></i>
+    </button>
+</div>
+
+<script>
+let imgData = "";
+let lang = "ar";
+
+const translations = {
+    ar: {
+        title: "GameHub Market Pro",
+        sell: "نشر حساب جديد",
+        info: "أدخل اسم اللعبة بدقة، حدد السعر، وأضف رقم هاتفك ليتمكن المشترون من مراسلتك مباشرة عبر واتساب.",
+        game: "اسم اللعبة",
+        price: "السعر",
+        phone: "رقم الهاتف",
+        desc: "وصف الحساب...",
+        addImg: "إضافة صورة الحساب",
+        post: "تأكيد ونشر الإعلان",
+        settings: "الإعدادات",
+        lang: "اختر اللغة:",
+        theme: "المظهر:",
+        clear: "حذف جميع بياناتي",
+        contact: "تواصل عبر واتساب",
+        empty: "لا يوجد إعلانات حالياً"
+    },
+    en: {
+        title: "GameHub Market Pro",
+        sell: "Post New Account",
+        info: "Enter the game name, set the price, and add your phone number so buyers can contact you via WhatsApp.",
+        game: "Game Name",
+        price: "Price",
+        phone: "Phone Number",
+        desc: "Account Description...",
+        addImg: "Add Account Image",
+        post: "Confirm and Post",
+        settings: "Settings",
+        lang: "Select Language:",
+        theme: "Theme:",
+        clear: "Clear All Data",
+        contact: "Chat on WhatsApp",
+        empty: "No ads found"
+    }
+};
+
+function updateLang(v) {
+    lang = v;
+    const t = translations[v];
+    document.documentElement.dir = v === 'ar' ? 'rtl' : 'ltr';
+    document.getElementById('mainTitle').innerText = t.title;
+    document.getElementById('sellTitle').innerText = t.sell;
+    document.querySelector('#instructions span').innerText = t.info;
+    document.getElementById('gameName').placeholder = t.game;
+    document.getElementById('price').placeholder = t.price;
+    document.getElementById('phone').placeholder = t.phone;
+    document.getElementById('desc').placeholder = t.desc;
+    document.getElementById('addImgText').innerText = t.addImg;
+    document.getElementById('postBtn').innerText = t.post;
+    document.getElementById('setHeading').innerText = t.settings;
+    document.getElementById('langText').innerText = t.lang;
+    document.getElementById('themeText').innerText = t.theme;
+    document.getElementById('clearDataText').innerText = t.clear;
+    loadPosts();
+}
+
+function showPage(page, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(page).classList.add('active');
+    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active-link'));
+    btn.classList.add('active-link');
+}
+
+function handleImage(e) {
+    const reader = new FileReader();
+    reader.onload = () => {
+        imgData = reader.result;
+        document.getElementById('preview').src = imgData;
+        document.getElementById('preview').style.display = "block";
+    };
+    reader.readAsDataURL(e.target.files[0]);
+}
+
+function savePost() {
+    const game = document.getElementById('gameName').value;
+    const price = document.getElementById('price').value;
+    const phone = document.getElementById('phone').value;
+    const desc = document.getElementById('desc').value;
+
+    if(!game || !price || !phone) return alert(lang === 'ar' ? "يرجى ملء الخانات الأساسية" : "Please fill required fields");
+
+    const post = { game, price, phone, desc, img: imgData, id: Date.now() };
+    let posts = JSON.parse(localStorage.getItem('myGamePosts') || "[]");
+    posts.unshift(post);
+    localStorage.setItem('myGamePosts', JSON.stringify(posts));
+    
+    alert(lang === 'ar' ? "تم النشر بنجاح!" : "Posted Successfully!");
+    location.reload();
+}
+
+function loadPosts() {
+    const posts = JSON.parse(localStorage.getItem('myGamePosts') || "[]");
+    const list = document.getElementById('postsList');
+    list.innerHTML = posts.length ? "" : `<p style="text-align:center; padding:50px; opacity:0.5;">${translations[lang].empty}</p>`;
+
+    posts.forEach(p => {
+        list.innerHTML += `
+            <div class="card">
+                <img src="${p.img || 'https://via.placeholder.com/400x200?text=No+Image'}">
+                <div class="card-body">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3 style="margin:0;">${p.game}</h3>
+                        <span style="color:var(--accent); font-weight:bold; font-size:1.2rem;">${p.price}</span>
+                    </div>
+                    <p style="font-size:14px; margin:10px 0; opacity:0.8;">${p.desc}</p>
+                    <a href="https://wa.me/${p.phone}" class="wa-btn">
+                        <i class="fa-brands fa-whatsapp"></i> ${translations[lang].contact}
+                    </a>
+                </div>
+            </div>
+        `;
+    });
+}
+
+function toggleTheme(m) {
+    if(m === 'light') document.body.classList.add('light');
+    else document.body.classList.remove('light');
+}
+
+function clearData() {
+    if(confirm(lang === 'ar' ? "هل أنت متأكد؟" : "Are you sure?")) {
+        localStorage.removeItem('myGamePosts');
+        location.reload();
+    }
+}
+</script>
+</body>
+</html>
